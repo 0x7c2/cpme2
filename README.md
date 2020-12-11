@@ -10,6 +10,9 @@ for R80.20 and above.
 Run command from expert mode (bash):  
 ```cpme```
 
+## Screenshots
+<img src="https://brecht.systems/cpme/cpme2.png">
+
 
 ## Credits
 - SVA System Vertrieb Alexander GmbH, https://www.sva.de/
