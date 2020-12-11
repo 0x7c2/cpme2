@@ -1,4 +1,4 @@
-# CPme
+# CPme2
 Just a simple tool to analyze your Check Point environment,
 for R80.20 and above.
 
