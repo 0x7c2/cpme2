@@ -213,6 +213,7 @@ class check_gaia_z_check_connectivity(check):
 	minVersion   = 8020
 	command      = "ls"
 	isCommand    = True
+	runOnStartup = False
 
 	def run_check(self):
 		proxy = ""
@@ -242,15 +243,22 @@ class check_gaia_z_check_connectivity(check):
 		urls.append(['http://downloads.checkpoint.com','Download of Endpoint Compliance Updates'])
 
 		for url in urls:
-			out, err = func.execute_command('curl_cli -Lisk ' + proxy + url[0] + ' | head -n1')
-			data = out.read().strip('\n').strip(' ')
-			if "OK" in data or "Found" in data or "Moved" in data or "Connection established" in data:
-				state = "PASS"
-				detail = ""
+			if self.runOnStartup:
+				out, err = func.execute_command('curl_cli -Lisk ' + proxy + url[0] + ' | head -n1')
+				data = out.read().strip('\n').strip(' ')
+				if "OK" in data or "Found" in data or "Moved" in data or "Connection established" in data:
+					state = "PASS"
+					detail = ""
+				else:
+					state = "FAIL"
+					detail = data
+				self.add_result(self.title + " [" + url[1] + "]", state, detail)
+
 			else:
-				state = "FAIL"
-				detail = data
-			self.add_result(self.title + " [" + url[1] + "]", state, detail)
+				self.add_result(self.title + " [" + url[1] + "]", 'WAIT', '')
+	
+	def set_command(self):
+		self.runOnStartup = True
 
 
 class check_gaia_interface_stats(check):

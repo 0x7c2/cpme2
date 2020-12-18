@@ -8,6 +8,7 @@
 
 import func
 import sys
+import threading
 from datetime import datetime
 
 class check:
@@ -46,6 +47,7 @@ class check:
 	command   = ""
 	commandOut = ""
 	commandErr = ""
+	runOnStartup = True
 
 	#
 	# predefine results
@@ -124,6 +126,9 @@ class check:
 	def set_commandOut(self, temp):
 		self.commandOut = temp
 
+	def set_command(self):
+		pass
+
 	def add_result(self, title, state, detail = ""):
 		self.debug(3, 'Adding results to array, state: ' + state)
 		self.results.append( { 'title': title, 'state': state, 'detail': detail } )
@@ -138,4 +143,108 @@ class check:
 
 	def get_log(self):
 		return self.debug_log[self.__class__.__name__]
+
+
+
+class diag:
+	page = ""
+
+	isFirewall = False
+	isManagement = False
+	isClusterXL = False
+
+	minVersion = 8020
+	supported = False
+
+	isDebugCommand = True
+	isEnabled = False
+	infoTxt = ""
+
+	debugLevel = 0
+	debug_log = {}
+
+	dialog_show = False
+	dialog_text = ""
+
+	intro = ['', 'This is a debug page view.', 'You have to explicit enable the debug command with typing "e",', 'and can disable this debug with typing "d".', '', 'Please note:', "During enabled debugging, you can't move the focus to other pages.", '', 'Hint:', 'Please take a note of possible commands in the bottom line/legend.', '', '-------------------------', '']
+	content = []
+	isTable = False
+
+	thread = None
+
+	def __init__(self, ver = 0, isFw = False, isMgmt = False, isCluster = False, debugLevel = 0):
+		if ver >= self.minVersion:
+			if self.isFirewall and self.isFirewall == isFw:
+				if self.isClusterXL and self.isClusterXL == isCluster:
+					self.supported = True
+				if not self.isClusterXL:
+					self.supported = True
+			if self.isManagement and isMgmt == self.isManagement:
+				self.supported = True
+		self.debugLevel = debugLevel
+		self.debug(1, "Class supported: " + str(self.supported))
+		if self.supported:
+			self.content = self.intro + self.content
+
+	def run(self):
+		try:
+			while self.isEnabled:
+				if self.isDebugCommand and self.isEnabled:
+					self.run_loop()
+				elif not self.isDebugCommand:
+					self.run_loop()
+			self.debug(2, "Stopping threaded debug command")
+			return False
+		except Exception as e:
+			print(e)
+			sys.exit()
+
+	def debug(self, level, msg):
+		timestamp = datetime.now()
+		classname = self.__class__.__name__
+		if not self.__class__.__name__ in self.debug_log:
+			self.debug_log[self.__class__.__name__] = []
+		if self.debugLevel >= level:
+			self.debug_log[self.__class__.__name__].append( { 'title': str(timestamp) + " " + classname, 'state': 'DEBUG', 'detail': msg } )
+
+	def get_log(self):
+		return self.debug_log[self.__class__.__name__]
+
+	def get_content(self):
+		return self.content
+
+	def get_legend(self):
+		if self.isDebugCommand:
+			if self.isEnabled:
+				return "d->disable"
+			else:
+				return "e->enable"
+		else:
+			return ""
+
+	def set_keypress_super(self, key):
+		if self.isEnabled and (key == ord('d') or key == ord('q') or key == 27):
+			self.isEnabled = False
+			self.infoTxt = []
+			self.debug(1, "Disabling running debug command")
+			self.set_disable()
+		if not self.isEnabled and key == ord('e'):
+			self.isEnabled = True
+			self.infoTxt = [ "Active Debugging of Class: ",  self.__class__.__name__ ]
+			self.debug(1, "Enabling running debug command")
+			self.set_enable()
+			self.thread = threading.Thread(target=self.run, args=())
+			self.thread.daemon = True
+			self.thread.start()
+			self.debug(2, "Started thread for debug command")
+		self.set_keypress(key)
+
+	def set_keypress(self, key):
+		pass
+
+	def set_enable(self):
+		pass
+
+	def set_disable(self):
+		pass
 

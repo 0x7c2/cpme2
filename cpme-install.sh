@@ -63,7 +63,7 @@ echo "#!/bin/bash" > /sbin/cpme
 echo "cd $where/cpme2" >> /sbin/cpme
 echo "$where/cpme2/cpme.py \$@" >> /sbin/cpme
 chmod +x /sbin/cpme
-chmod +x $where/cpme-py/cpme.py
+chmod +x $where/cpme2/cpme.py
 echo
 echo "Installation complete!"
 echo "Just type 'cpme' to run the tool..."

@@ -160,6 +160,9 @@ class mymenu:
 		elif self.search_enabled:
 			self.infobar = True
 			self.content.infobar = True
+		elif self.content.diag:
+			self.infobar = True
+			self.content.infobar = True
 		else:
 			self.infobar = False
 			self.content.infobar = False
@@ -210,6 +213,7 @@ class mymenu:
 		#
 		self.content.set_search(self.search_enabled, self.search_string)
 		self.content.set_content(self.menu_val + "." + self.menu_sub_val)
+		content_legend = self.content.get_legend()
 
 		#
 		# display progress if needed
@@ -227,17 +231,26 @@ class mymenu:
 				self.screen.addstr(self.window_rows-4, 2, txt)
 				self.screen.addstr(self.window_rows-3, 2, "Current check: " + self.content.check_cur, curses.color_pair(6))
 			if self.search_enabled:
-				self.screen.addstr(self.window_rows-4, 2, "Enter search term: (Press backspace to disable)")
+				self.screen.addstr(self.window_rows-4, 2, "Enter search term: (Press escape to disable)")
 				self.screen.addstr(self.window_rows-3, 2, self.search_string)
+			if self.content.diag:
+				self.screen.addstr(self.window_rows-4, 2, self.content.diag_txt[0])
+				self.screen.addstr(self.window_rows-3, 2, self.content.diag_txt[1])
 
 
 		#
 		# display legend
 		#
-		if not self.search_enabled and not self.content.processing: 
+		if not self.search_enabled and not self.content.processing and not self.content.diag: 
 			legend = "q->quit, r->rerun tests"
-			if self.focusSub:
+			if self.focusSub and content_legend == "":
 				legend = legend + ", s->search"
+			if content_legend != "" and self.focusSub:
+				legend = legend + ", " + content_legend
+		elif self.content.diag and not self.search_enabled:
+			legend = "q->quit"
+			if self.focusSub and content_legend != "":
+				legend = legend + ", " + content_legend
 		else:
 			legend = ""
 
@@ -252,7 +265,7 @@ class mymenu:
 		#
 		# print legend and scrolling bar
 		#
-		self.screen.addstr(self.window_rows-2, 2, legend)
+		self.screen.addstr(self.window_rows-2, 2, legend[:(self.window_cols - 4)])
 
 		#
 		# request user input
@@ -260,9 +273,13 @@ class mymenu:
 		self.screen.refresh()
 		u_input = self.screen.getch()
 
+		if self.focusSub:
+			self.content.set_keypress(u_input)
+
 		if self.search_enabled and not u_input == curses.KEY_DOWN and not u_input == curses.KEY_UP:
-			if u_input == curses.KEY_BACKSPACE and self.search_string == "":
+			if u_input == 27:
 				self.search_enabled = False
+				self.search_string = ""
 			elif u_input == curses.KEY_BACKSPACE and self.search_string != "":
 				self.search_string = self.search_string[:-1]
 			elif u_input != -1 and u_input in range(32, 127):
@@ -279,7 +296,7 @@ class mymenu:
 
 		elif u_input == curses.KEY_UP:
 			# key up
-			if self.focusSub and self.content.scrollpos < 1 and not self.search_enabled:
+			if self.focusSub and self.content.scrollpos < 1 and not self.search_enabled and not self.content.diag:
 				self.focusSub = False
 				self.focusMenu = True
 			elif self.focusSub and self.content.scrolling and self.content.scrollpos > 0:
@@ -310,7 +327,7 @@ class mymenu:
 				if self.menu_pos > 1:
 					self.menu_pos = self.menu_pos - 1
 			if self.focusSub:
-				if self.menu_sub_pos > 1:
+				if self.menu_sub_pos > 1 and not self.content.diag:
 					self.content.scrollpos = 0
 					self.menu_sub_pos = self.menu_sub_pos - 1
 
@@ -321,11 +338,11 @@ class mymenu:
 				if self.menu_pos < len(self.menu):
 					self.menu_pos = self.menu_pos + 1
 			if self.focusSub:
-				if self.menu_sub_pos < len(self.menu[self.menu_val]):
+				if self.menu_sub_pos < len(self.menu[self.menu_val]) and not self.content.diag:
 					self.content.scrollpos = 0
 					self.menu_sub_pos = self.menu_sub_pos + 1
 
-		elif u_input == ord('r'):
+		elif u_input == ord('r') and not self.content.diag:
 			self.content.run_self()
 
 		elif u_input == ord('s'):

@@ -96,7 +96,7 @@ def execute_sqlite_query(sql):
 			run = False
 			break
 		except:
-			time.sleep(0.5)
+			time.sleep(0.2)
 	return dbcur
 
 
