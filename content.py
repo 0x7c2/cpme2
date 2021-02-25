@@ -232,6 +232,15 @@ class content:
 			if not page in self.special_pages and not foundWaiting:
 				self.waitingChecks = False
 
+		for p in self.diags:
+			if p == page:
+				self.classes[self.diags[p]].isVisible = True
+			else:
+				self.classes[self.diags[p]].isVisible = False
+				if self.classes[self.diags[p]].thread != None and not self.classes[self.diags[p]].isRunning:
+					self.classes[self.diags[p]].thread.join()
+					self.classes[self.diags[p]].thread = None
+
 		if page in self.diags:
 			rows = self.classes[self.diags[page]].get_content()
 			self.diag = self.classes[self.diags[page]].isEnabled

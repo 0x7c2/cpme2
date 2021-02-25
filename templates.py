@@ -7,7 +7,7 @@
 #
 
 import func
-import sys
+import sys, time
 import threading
 from datetime import datetime
 
@@ -160,6 +160,9 @@ class diag:
 	isEnabled = False
 	infoTxt = ""
 
+	isVisible = False
+	isRunning = False
+
 	debugLevel = 0
 	debug_log = {}
 
@@ -183,16 +186,19 @@ class diag:
 				self.supported = True
 		self.debugLevel = debugLevel
 		self.debug(1, "Class supported: " + str(self.supported))
-		if self.supported:
+		if self.supported and self.isDebugCommand:
 			self.content = self.intro + self.content
 
 	def run(self):
 		try:
-			while self.isEnabled:
+			while (self.isEnabled or self.isVisible):
+				self.isRunning = True
 				if self.isDebugCommand and self.isEnabled:
 					self.run_loop()
-				elif not self.isDebugCommand:
+				elif not self.isDebugCommand and self.isVisible:
 					self.run_loop()
+				time.sleep(1)
+			self.isRunning = False
 			self.debug(2, "Stopping threaded debug command")
 			return False
 		except Exception as e:
@@ -211,6 +217,12 @@ class diag:
 		return self.debug_log[self.__class__.__name__]
 
 	def get_content(self):
+		if self.isVisible and self.thread == None:
+			self.debug(2, "Class is now visible and now task is running")
+			self.debug(2, "Lets create a task/thread for this class....")
+			self.thread = threading.Thread(target=self.run, args=())
+			self.thread.daemon = True
+			self.thread.start()
 		return self.content
 
 	def get_legend(self):

@@ -9,6 +9,90 @@
 from templates import check
 import func
 
+
+
+class check_health_securexl_dos_blacklist(check):
+	page         = "Health.SecureXL"
+	category     = "DoS Blacklist"
+	title        = "Blacklist entry"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fwaccel dos blacklist -s"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if "is empty" in line:
+				self.add_result("Blacklist is empty", "PASS", "")
+				return
+			self.add_result(self.title, "WARN", line.strip())
+
+
+class check_health_securexl_dos_whitelist(check):
+	page         = "Health.SecureXL"
+	category     = "DoS Whitelist"
+	title        = "Whitelist entry"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fwaccel dos whitelist -s"
+	isCommand    = True
+
+	def run_check(self):
+		if len(self.commandOut) < 4:
+			self.add_result("Whitelist is empty", "PASS", "")
+		else:
+			for line in self.commandOut:
+				self.add_result(self.title, "WARN", line.strip())
+
+
+class check_health_securexl_dos(check):
+	page         = "Health.SecureXL"
+	category     = "DoS"
+	title        = "SXL DoS Config"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fwaccel dos config get"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			data = line.split(":")
+			f = data[0].strip()
+			v = data[1].strip()
+			self.add_result(self.title + " (" + f + ")", "INFO", v)
+
+
+class check_health_blade_ext_ioc_feeds(check):
+	page         = "Health.Blades"
+	category     = "External IOC Feeds"
+	title        = "IOC Feed"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "ioc_feeds show"
+	isCommand    = True
+
+	def run_check(self):
+		f_name = ""
+		f_status = ""
+		f_url = ""
+		f_action = ""
+		for line in self.commandOut:
+			if "Feed Name:" in line:
+				f_name = line.replace('Feed Name: ','').strip(' ')[6:-4]
+			if "Feed is" in line:
+				if "Active" in line:		f_status = "Active"
+				if "not Active" in line:	f_status = "NOT Active"
+			if "Resource:" in line:
+				f_url = line.replace('Resource: ','').strip(' ')
+			if "Action:" in line:
+				f_action = line.replace('Action: ','').strip(' ')
+				self.add_result(self.title + " (" + f_name + ")", "INFO", f_status + ", " + f_url)
+
+
 class check_health_blade_update_status(check):
 	page         = "Health.Blades"
 	category     = "Updates"
@@ -66,11 +150,11 @@ class check_health_blade_status(check):
 				blade = ""
 				status = ""
 			if ("enable" in status.lower() or "disable" in status.lower()) and "fileapp_ctx_enabled" not in status.lower():
-				self.add_result(self.title + " (" + blade + ")", "INFO", status)
+				self.add_result(self.title + " (" + blade + ")", "INFO", status.strip(" "))
 				if blade == "IPS" and "enable" in status.lower():
 					out, err = func.execute_command('cat $FWDIR/state/local/AMW/local.set | grep -A15 malware_profiles | grep ":name" | awk "{print $2}" | tr -d "()"')
 					for l in out:
-						self.add_result("Thread Prevention Policy", "INFO", l.strip('\n').replace(':name ', '').strip())
+						self.add_result("Thread Prevention Policy", "INFO", l.strip('\n').replace(':name ', '').strip().strip('\t'))
 
 
 
@@ -581,6 +665,7 @@ class check_health_corexl_stats(check):
 
 	def run_check(self):
 		stats = []
+		raw = []
 		for line in self.commandOut:
 			if not "ID" in line and not "-----" in line:
 				data = line.split('|')
@@ -590,13 +675,16 @@ class check_health_corexl_stats(check):
 				conns = int(data[3])
 				peak = int(data[4])
 				stats.append([active, cpu, conns, peak])
+				raw.append([str(id), active, str(cpu), str(conns), str(peak)])
 		state = "PASS"
 		detail = ""
 		for a in stats:
 			for b in stats:
 				if int(a[2]) > (int(b[2]) * 1.5) or int(a[3]) > (int(b[3]) * 1.3):
 					state = "WARN"
-					detail = "check CoreXL balancing"
+					for r in raw:
+						self.add_result(self.title + " (ID: " + r[0] + ", Active: " + r[1] + ", CPU: " + r[2] + ")", "WARN", "Conns: " + r[3] + " / Peak: " + r[4])
+					return
 		self.add_result(self.title, state, detail)
 
 

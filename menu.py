@@ -273,7 +273,7 @@ class mymenu:
 		self.screen.refresh()
 		u_input = self.screen.getch()
 
-		if self.focusSub:
+		if self.focusSub and not self.content.processing and not self.search_enabled:
 			self.content.set_keypress(u_input)
 
 		if self.search_enabled and not u_input == curses.KEY_DOWN and not u_input == curses.KEY_UP:

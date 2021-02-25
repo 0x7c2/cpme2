@@ -80,4 +80,23 @@ class diag_troubleshooting_f2f_worker(diag):
 					dst = data[3].strip()
 					dst_p = data[4].strip()
 					self.content.append([ str(s["worker"]), str(s["type"]), str(s["cycles"]), str(s["timeago"]), proto, src, src_p, dst, dst_p ])
-		time.sleep(1)
+
+
+
+class diag_troubleshooting_clusterxl_state(diag):
+	page         = "Troubleshooting.ClusterXL State"
+	title        = "Show ClusterXL State"
+	isFirewall   = True
+	isManagement = False
+	isClusterXL  = True
+	minVersion   = 8020
+
+	content      = [ 'Starting Output...' ]
+	isDebugCommand = False
+	isTable = False
+
+	def run_loop(self):
+		out, err = func.execute_command('cphaprob state')
+		self.content = out.read().split('\n')
+
+
