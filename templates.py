@@ -33,6 +33,7 @@ class check:
 	isFirewall = False
 	isManagement = False
 	isClusterXL = False
+	isBlade = ""
 
 	#
 	# minimum version
@@ -59,7 +60,7 @@ class check:
 	#
 	debug_log = {}
 
-	def __init__(self, version, isFw = False, isMgmt = False, isCluster = False, debugLevel = 0):
+	def __init__(self, version, isFw = False, isMgmt = False, isCluster = False, enabledBlades = [], debugLevel = 0):
 		if version >= self.minVersion:
 			if self.isFirewall and self.isFirewall == isFw:
 				if self.isClusterXL and self.isClusterXL == isCluster:
@@ -68,6 +69,9 @@ class check:
 					self.supported = True
 			if self.isManagement and isMgmt == self.isManagement:
 				self.supported = True
+		if self.supported and self.isBlade != "":
+			if not self.isBlade in enabledBlades:
+				self.supported = False
 		self.debugLevel = debugLevel
 		self.debug(2, '-----------------------------')
 		self.debug(1, "Class supported: " + str(self.supported))
@@ -152,6 +156,7 @@ class diag:
 	isFirewall = False
 	isManagement = False
 	isClusterXL = False
+	isBlade = ""
 
 	minVersion = 8020
 	supported = False
@@ -175,7 +180,7 @@ class diag:
 
 	thread = None
 
-	def __init__(self, ver = 0, isFw = False, isMgmt = False, isCluster = False, debugLevel = 0):
+	def __init__(self, ver = 0, isFw = False, isMgmt = False, isCluster = False, enabledBlades = [], debugLevel = 0):
 		if ver >= self.minVersion:
 			if self.isFirewall and self.isFirewall == isFw:
 				if self.isClusterXL and self.isClusterXL == isCluster:
@@ -184,6 +189,9 @@ class diag:
 					self.supported = True
 			if self.isManagement and isMgmt == self.isManagement:
 				self.supported = True
+		if self.supported and self.isBlade != "":
+			if not self.isBlade in enabledBlades:
+				self.supported = False
 		self.debugLevel = debugLevel
 		self.debug(1, "Class supported: " + str(self.supported))
 		if self.supported and self.isDebugCommand:

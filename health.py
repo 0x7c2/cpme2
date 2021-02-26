@@ -9,6 +9,59 @@
 from templates import check
 import func
 
+
+class check_health_sensors(check):
+	page         = "Health.Hardware"
+	category     = "Soft Sensors"
+	title        = "Sensor"
+	isFirewall   = True
+	isManagement = True
+	minVersion   = 8020
+	command      = "cpstat -f sensors os"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if "|" in line and not "Name" in line and not "-------" in line:
+				data = line.split("|")
+				state = "PASS"
+				s_name = data[1].strip()
+				s_val  = data[2].strip()
+				s_unit = data[3].strip()
+				s_type = data[4].strip()
+				s_stat = data[5].strip()
+				if s_stat != "0":	state = "FAIL"
+				self.add_result(s_type + " -> " + s_name, state, s_val + " " + s_unit)
+			
+
+
+class check_health_ipmi(check):
+	page         = "Health.Hardware"
+	category     = "IPMI Sensors"
+	title        = "Sensor"
+	isFirewall   = True
+	isManagement = True
+	minVersion   = 8020
+	command      = "ls"
+	isCommand    = True
+
+	def run_check(self):
+		found = False
+		for e in func.ipmiInfo():
+			found = True
+			sensor = e[0].strip()
+			value  = e[1].strip()
+			vtype  = e[2].strip()
+			sstate = e[3].strip()
+			if value != "na" and value != "0x0" and value != "0.000":
+				state = "WARN"
+				if sstate == "ok":	state = "PASS"
+				if sstate == "na":	state = "INFO"
+			self.add_result(self.title + " - " + sensor, state, value + " " + vtype)
+		if not found:
+			self.add_result(self.title + " -> Could not found any sensor!", "INFO", "")
+
+
 class check_health_securexl_dos_blacklist(check):
 	page         = "Health.SecureXL"
 	category     = "DoS Blacklist"

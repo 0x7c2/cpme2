@@ -10,12 +10,237 @@ from templates import check
 import func
 
 
-class check_blades_vpn_summary(check):
+class check_blades_vpn_polsrv(check):
 	page         = "Software Blades.VPN"
-	category     = "Summary"
+	category     = "Policy Server"
 	title        = ""
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "vpn"
+	minVersion   = 8020
+	command      = "cpstat -f all polsrv"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if ":" in line:
+				state = "INFO"
+				data = line.split(':')
+				p_field = data[0].strip()
+				p_val   = data[1].strip()
+				if "Down" in p_val:	state = "WARN"
+				if "OK" in p_val:	state = "PASS"
+				if "is down" in p_val:	state = "WARN"
+				if "is up" in p_val:	state = "PASS"
+				self.add_result(p_field, state, p_val)
+
+
+class check_blades_ia_stat_auth(check):
+	page         = "Software Blades.IA"
+	category     = "Authentication"
+	title        = "IA-Auth"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "identityServer"
+	minVersion   = 8020
+	command      = "cpstat -f authentication identityServer"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if ":" in line:
+				data = line.split(':')
+				a_field = data[0].strip()
+				a_val   = data[1].strip()
+				self.add_result(self.title + " - " + a_field, "INFO", a_val)
+
+
+class check_blades_ia_stat_login(check):
+	page         = "Software Blades.IA"
+	category     = "Logins"
+	title        = "IA-Login"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "identityServer"
+	minVersion   = 8020
+	command      = "cpstat -f logins identityServer"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			state = "INFO"
+			if ":" in line:
+				data = line.split(':')
+				a_field = data[0].strip()
+				a_val   = data[1].strip()
+				if "Unsuccessful" in a_field and a_val != "0":
+					state = "WARN"
+				self.add_result(self.title + " - " + a_field, state, a_val)
+
+
+
+class check_blades_ips_stat(check):
+	page         = "Software Blades.IPS"
+	category     = "0verview / Statistics"
+	title        = "IPS"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "ips"
+	minVersion   = 8020
+	command      = "ips stat"
+	isCommand    = True
+
+	def run_check(self):
+		isField = False
+		t_field = ""
+		t_val   = ""
+		for line in self.commandOut:
+			if ":" in line and not "Active Profiles" in line:
+				data = line.split(':')
+				i_field = data[0].strip()
+				i_val   = data[1].strip()
+				if len(data) > 1:
+					self.add_result(self.title + " - " + i_field, "INFO", i_val)
+			else:
+				if "Active Profiles" in line:
+					t_field = line.split(':')[0].strip()
+					isField = True
+				if not "Active Profiles" in line and isField:
+					t_val = line.strip()
+					self.add_result(self.title + " - " + t_field, "INFO", t_val)
+					isField = False
+					t_field = ""
+					t_val   = ""
+
+
+class check_blades_ips_bypass(check):
+	page         = "Software Blades.IPS"
+	category     = "IPS Bypass"
+	title        = "IPS Bypass"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "ips"
+	minVersion   = 8020
+	command      = "ips bypass stat"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if ":" in line:
+				data = line.split(':')
+				i_field = data[0].strip()
+				i_val   = data[1].strip()
+				self.add_result(self.title + " - " + i_field, "INFO", i_val)
+
+
+class check_blades_ssl_stats(check):
+	page         = "Software Blades.SSL Interception"
+	category     = "0verview / Statistics"
+	title        = "SSL"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "SSL_INSPECT"
+	minVersion   = 8020
+	command      = "cpstat -f all https_inspection"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			state = "INFO"
+			if ":" in line:
+				data = line.split(':')
+				s_field = data[0].strip()
+				s_val   = data[1].strip()
+				if "Cannot" in s_val:
+					state = "WARN"
+				self.add_result(self.title + " - " + s_field, state, s_val)
+
+
+class check_blades_vpn_stats(check):
+	page         = "Software Blades.VPN"
+	category     = "Statistics"
+	title        = "VPN"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "vpn"
+	minVersion   = 8020
+	command      = "cpstat -f all vpn"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			data = line.split(':')
+			v_field = data[0].strip()
+			v_val   = data[1].strip()
+			if "error" in v_field:
+				state = "WARN"
+			else:
+				state = "PASS"
+			if not v_val == "0" and not "Product" in line and not "IPsec NIC" in line:
+				self.add_result(self.title + " - " + v_field, state, v_val)
+
+
+
+class check_blades_fg_stat(check):
+	page         = "Software Blades.QoS"
+	category     = "0verview / Statistics"
+	title        = "QoS"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "qos"
+	minVersion   = 8020
+	command      = "fgate stat"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if ":" in line:
+				data = line.split(':')
+			else:
+				data = line
+			if "Policy Name" in line:
+				self.add_result(self.title + " - Policy Name", "INFO", data[1].strip())
+			if "Install time" in line:
+				self.add_result(self.title + " - Install Time", "INFO", line.replace('Install time:','').strip())
+			if "Interfaces Num" in line:
+				self.add_result(self.title + " - Interface Count", "INFO", data[1].strip())
+
+
+class check_blades_fg_iface(check):
+	page         = "Software Blades.QoS"
+	category     = "Interfaces"
+	title        = "QoS"
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "qos"
+	minVersion   = 8020
+	command      = "fgate stat"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if "|" in line and "Dir" not in line:
+				data = line.split('|')
+				q_if    = data[1].strip()
+				q_dir   = data[2].strip()
+				q_limit = data[3].strip()
+				q_rate  = data[4].strip()
+				q_conn  = data[5].strip()
+				q_p_p   = data[6].strip()
+				q_p_b   = data[7].strip()
+				self.add_result(self.title + " - Interface " + q_if + "/" + q_dir + " Rate/Limit", "INFO", q_rate + " / " + q_limit)
+				if q_p_p != "0" or q_p_b != "0":
+					self.add_result(self.title + " - Interface " + q_if + "/" + q_dir + " Pending Data!", "WARN", q_p_p + " packets, " + q_p_b + " bytes")
+
+
+
+class check_blades_vpn_summary(check):
+	page         = "Software Blades.VPN"
+	category     = "0verview / Summary"
+	title        = ""
+	isFirewall   = True
+	isManagement = False
+	isBlade      = "vpn"
 	minVersion   = 8030
 	command      = "vpn tu tlist"
 	isCommand    = True
@@ -33,13 +258,18 @@ class check_blades_vpn_summary(check):
 				s2s = False
 				c2s = True
 			if s2s and ("IPSEC" in line or "NAT-T" in line):
-				data = line.split(" ")
+				data = line.split()
 				v_type  = data[0].strip()
 				v_count = data[1].strip()
 				self.add_result("Site-2-Site VPN Count / " + v_type, "INFO", "Tunnels: " + v_count)
 			if c2s and ("NAT-T" in line or "Visitor" in line or "SSL" in line or "L2TP" in line):
-				data = line.split(" ")
+				data = line.split()
 				v_type  = data[0].strip()
+				if len(data) < 3:
+					v_count = data[1].strip()
+				else:
+					v_type = v_type + " " + data[1].strip()
+					v_count = data[2].strip()
 				v_count = data[1].strip()
 				self.add_result("Client-2-Site VPN Count / " + v_type, "INFO", "Tunnels: " + v_count)
 
@@ -65,8 +295,9 @@ class check_blades_ia_pep_conns(check):
 	title        = ""
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "identityServer"
 	minVersion   = 8020
-	command      = "pep show pdp all"
+	command      = "pep show pdp all | grep -v 'not running'"
 	isCommand    = True
 
 	def run_check(self):
@@ -94,8 +325,9 @@ class check_blades_ia_pdp_conns(check):
 	title        = ""
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "identityServer"
 	minVersion   = 8020
-	command      = "pdp connections pep"
+	command      = "pdp connections pep | grep -v 'not running'"
 	isCommand    = True
 
 	def run_check(self):
@@ -124,6 +356,7 @@ class check_blades_ssl_enhanced(check):
 	title        = "Enhanced SSL Interception"
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "SSL_INSPECT"
 	minVersion   = 8030
 	command      = "fw ctl get int enhanced_ssl_inspection | cut -d '=' -f 2"
 	isCommand    = True
@@ -142,6 +375,7 @@ class check_blades_ssl_enhanced_bypass(check):
 	title        = "Bypass on enhanced SSL Interception"
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "SSL_INSPECT"
 	minVersion   = 8030
 	command      = "fw ctl get int bypass_on_enhanced_ssl_inspection | cut -d '=' -f 2"
 	isCommand    = True
@@ -257,6 +491,7 @@ class check_blades_vpn_ttmfile(check):
 	title        = "Syntax trac_client_1.ttm"
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "vpn"
 	minVersion   = 8020
 	command      = "vpn check_ttm $FWDIR/conf/trac_client_1.ttm"
 	isCommand    = True
@@ -278,6 +513,7 @@ class check_blades_vpn_ipafile(check):
 	title        = "Syntax ipassignment.conf"
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "vpn"
 	minVersion   = 8020
 	command      = "vpn ipafile_check /opt/CPsuite-R80.40/fw1/conf/ipassignment.conf"
 	isCommand    = True
@@ -298,6 +534,7 @@ class check_blades_vpn_encryption_domains(check):
 	title        = "Overlapping Encryption Domains"
 	isFirewall   = True
 	isManagement = False
+	isBlade      = "vpn"
 	minVersion   = 8020
 	command      = "vpn overlap_encdom"
 	isCommand    = True

@@ -10,6 +10,28 @@ from templates import check
 import func
 
 
+class check_gaia_hwinfo(check):
+	page         = "GAiA.0verview"
+	category     = "Appliance"
+	title        = ""
+	isFirewall   = True
+	isManagement = True
+	minVersion   = 8020
+	command      = "cpstat -f hw_info os"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			if ":" in line:
+				data = line.split(':')
+				a_field = data[0].strip()
+				if len(data) > 1:
+					a_val = data[1].strip()
+				else:
+					a_val = ""
+				self.add_result(a_field, "INFO", a_val)
+
+
 class check_gaia_scheduled_backup(check):
 	page         = "GAiA.0verview"
 	category     = "GAiA Settings"

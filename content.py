@@ -61,6 +61,8 @@ class content:
 	search_enabled = False
 	search_string = ""
 
+	enabledBlades = []
+
 	diag = False
 	diag_txt = []
 
@@ -86,6 +88,7 @@ class content:
 
 	def __init__(self, debugLevel = 0):
 		self.debugLevel = debugLevel
+		self.enabledBlades = func.enabledBlades()
 		self.modules = map(__import__, self.dynamic_load)
 		i = 0
 		for module in self.modules:
@@ -93,7 +96,7 @@ class content:
 				if inspect.isclass(obj):
 					if "check_" in name or "diag_" in name:
 						class_ = getattr(module, name)
-						self.classes[name] = class_(func.fwVersion(), isFw = func.isFirewall(), isMgmt = func.isManagement(), isCluster = func.isCluster(), debugLevel = self.debugLevel)
+						self.classes[name] = class_(func.fwVersion(), isFw = func.isFirewall(), isMgmt = func.isManagement(), isCluster = func.isCluster(), enabledBlades = self.enabledBlades, debugLevel = self.debugLevel)
 						i = i + 1
 		self.run_self()
 

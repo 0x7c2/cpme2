@@ -26,7 +26,7 @@ class check_performance_ispredundancy(check):
 			ispstatus = fields[2]
 			isprole = fields[3]
 			if ispname != "Name":
-				ipstatus = "WARN"
+				state = "WARN"
 				if ispstatus == "OK":
 					state = "PASS"
 				self.add_result(self.title + " (Name: " + ispname + ")", state, "Role: " + isprole)

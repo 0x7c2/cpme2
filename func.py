@@ -216,6 +216,18 @@ def isFWUserMode():
 		cache_isFWUserMode = ret
 	return cache_isFWUserMode
 
+#
+# possible values:
+# fw vpn urlf av appi ips identityServer SSL_INSPECT anti_bot content_awareness qos mon
+#
+cache_enabledBlades = []
+def enabledBlades():
+	global cache_enabledBlades
+	if len(cache_enabledBlades) < 1:
+		out, err = execute_command('enabled_blades')
+		cache_enabledBlades = out.read().strip('\n').split()
+	return cache_enabledBlades
+
 
 if fwVersion() >= 8020 and fwVersion() <= 8030:
 	cpview_database = "/var/log/CPView_history/CPViewDB.dat"
