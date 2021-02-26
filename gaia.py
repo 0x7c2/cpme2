@@ -9,6 +9,7 @@
 from templates import check
 import func
 
+
 class check_gaia_scheduled_backup(check):
 	page         = "GAiA.0verview"
 	category     = "GAiA Settings"
@@ -338,6 +339,25 @@ class check_gaia_disk_space(check):
 			if data[1] == "/boot" or data[1] == "/dev/shm":
 				state = "PASS"
 			self.add_result(self.title + " (" + data[1] + ")", state, data[0]) 
+
+
+class check_gaia_cpu_smt(check):
+	page         = "GAiA.0verview"
+	category     = "CPU"
+	title        = "Hyperthreading/SMT"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = 'if [ ! -f "/proc/smt_status" ] ; then echo "Not available" ; else cat /proc/smt_status ; fi'
+	isCommand    = True
+
+	def run_check(self):
+		data = self.commandOut[0].strip()
+		if "Unsupported" in data:
+			self.add_result(self.title, "INFO", "Disabled")
+		else:
+			self.add_result(self.title, "INFO", data)
+
 
 
 class check_gaia_cpu_usage(check):

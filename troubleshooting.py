@@ -96,7 +96,7 @@ class diag_troubleshooting_clusterxl_state(diag):
 	isTable = False
 
 	def run_loop(self):
-		out, err = func.execute_command('cphaprob state')
+		out, err = func.execute_command('cphaprob state ; echo ; cphaprob -a if')
 		self.content = out.read().split('\n')
 
 

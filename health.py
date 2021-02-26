@@ -9,8 +9,6 @@
 from templates import check
 import func
 
-
-
 class check_health_securexl_dos_blacklist(check):
 	page         = "Health.SecureXL"
 	category     = "DoS Blacklist"
@@ -65,98 +63,23 @@ class check_health_securexl_dos(check):
 			self.add_result(self.title + " (" + f + ")", "INFO", v)
 
 
-class check_health_blade_ext_ioc_feeds(check):
-	page         = "Health.Blades"
-	category     = "External IOC Feeds"
-	title        = "IOC Feed"
+
+
+class check_health_firewall_dynamic_split(check):
+	page         = "Health.Firewall"
+	category     = "Information"
+	title        = "Dynamic Split"
 	isFirewall   = True
 	isManagement = False
-	minVersion   = 8020
-	command      = "ioc_feeds show"
+	minVersion   = 8040
+	command      = "dynamic_split -p"
 	isCommand    = True
 
 	def run_check(self):
-		f_name = ""
-		f_status = ""
-		f_url = ""
-		f_action = ""
-		for line in self.commandOut:
-			if "Feed Name:" in line:
-				f_name = line.replace('Feed Name: ','').strip(' ')[6:-4]
-			if "Feed is" in line:
-				if "Active" in line:		f_status = "Active"
-				if "not Active" in line:	f_status = "NOT Active"
-			if "Resource:" in line:
-				f_url = line.replace('Resource: ','').strip(' ')
-			if "Action:" in line:
-				f_action = line.replace('Action: ','').strip(' ')
-				self.add_result(self.title + " (" + f_name + ")", "INFO", f_status + ", " + f_url)
-
-
-class check_health_blade_update_status(check):
-	page         = "Health.Blades"
-	category     = "Updates"
-	title        = "Blade Update Status"
-	isFirewall   = True
-	isManagement = False
-	minVersion   = 8020
-	command      = "ls"
-	isCommand    = True
-
-	def run_check(self):
-
-		stat = [	["URL Filtering",	"urlf", 0],
-				["AntiBot",		"antimalware", 0],
-				["AntiVirus",		"antimalware", 1],
-				["Application Control",	"appi", 0]]
-		i = 0
-		oldcmd = ""
-		while i < len(stat):
-			newcmd = "cpstat -f update_status " + stat[i][1] + " | grep 'Update status'"
-			if oldcmd != newcmd:
-				out, err = func.execute_command(newcmd)
-				oldcmd = newcmd
-				data = out.read().split('\n')
-			val = stat[i][2]
-			line = data[val].split(':')[1].strip(' ').strip('\n')
-			state = "FAIL"
-			detail = ""
-			if line == "-" or line == "":
-				state = "INFO"
-				detail = "not active"
-			if line == "up-to-date":
-				state = "PASS"
-				detail = "up-to-date"
-			self.add_result(self.title + " (" + stat[i][0] + ")", state, detail)
-			i = i + 1
-
-class check_health_blade_status(check):
-	page         = "Health.Blades"
-	category     = "Status"
-	title        = "Blade Status"
-	isFirewall   = True
-	isManagement = False
-	minVersion   = 8020
-	command      = "fw stat -b AMW"
-	isCommand    = True
-
-	def run_check(self):
-		for line in self.commandOut:
-			if ":" in line:
-				tmp = line.strip('\n').split(":")
-				blade  = tmp[0].strip(' ')
-				status = tmp[1].strip(' ')
-			else:
-				blade = ""
-				status = ""
-			if ("enable" in status.lower() or "disable" in status.lower()) and "fileapp_ctx_enabled" not in status.lower():
-				self.add_result(self.title + " (" + blade + ")", "INFO", status.strip(" "))
-				if blade == "IPS" and "enable" in status.lower():
-					out, err = func.execute_command('cat $FWDIR/state/local/AMW/local.set | grep -A15 malware_profiles | grep ":name" | awk "{print $2}" | tr -d "()"')
-					for l in out:
-						self.add_result("Thread Prevention Policy", "INFO", l.strip('\n').replace(':name ', '').strip().strip('\t'))
-
-
+		if "off" in self.commandOut[0]:
+			self.add_result(self.title, "INFO", "not active")
+		else:
+			self.add_result(self.title, "INFO", "active")
 
 
 class check_health_firewall_mode(check):
@@ -279,28 +202,6 @@ class check_health_clusterxl_sync_stat(check):
 		if not error:
 			self.add_result(self.title + " [Statistics]", "PASS", "")
 
-
-class check_health_firewall_encryption_domains(check):
-	page         = "Health.Firewall"
-	category     = "VPN"
-	title        = "Overlapping Encryption Domains"
-	isFirewall   = True
-	isManagement = False
-	minVersion   = 8020
-	command      = "vpn overlap_encdom"
-	isCommand    = True
-
-	def run_check(self):
-		found = False
-		if len(self.commandOut) == 0:
-			self.add_result(self.title, "PASS", "")
-			found = True
-		for o in self.commandOut:
-			if 'No overlapping encryption domain' in o:
-				self.add_result(self.title, "PASS", "")
-				found = True
-		if not found:
-			self.add_result(self.title, "FAIL", "please check encryption domains!")
 
 
 class check_health_licensing_sum(check):
@@ -651,10 +552,31 @@ class check_health_firewall_aging(check):
 		self.add_result(self.title, state, detail)
 
 
+class check_health_corexl_dispatcher(check):
+	page         = "Health.CoreXL"
+	category     = "CoreXL Dispatcher"
+	title        = "CoreXL Dispatcher"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fw ctl multik dynamic_dispatching get_mode"
+	isCommand    = "True"
+
+	def run_check(self):
+		found = False
+		for line in self.commandOut:
+			if "is On" in line:
+				self.add_result(self.title, "PASS", "Active")
+				found = True
+				return
+		if not found:
+			self.add_results(self.title, "FAIL", "Not active!")
+
+
 
 class check_health_corexl_stats(check):
-	page         = "Health.Firewall"
-	category     = "CoreXL"
+	page         = "Health.CoreXL"
+	category     = "CoreXL Balancing"
 	title        = "CoreXL Balancing"
 	isFirewall   = True
 	isManagement = False
