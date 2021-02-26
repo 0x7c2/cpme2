@@ -16,7 +16,7 @@ import content
 #   [...]
 #   5     : max debug output
 #
-debug = 5
+debug = 0
 
 mycontent = content.content(debugLevel = debug)
 mymenu = menu.mymenu(mycontent, debugLevel = debug)

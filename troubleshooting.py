@@ -177,20 +177,22 @@ class diag_troubleshooting_throughput(diag):
 			self.content = []
 			self.content.append([ "Interface" , "IP-Address" , "RX Rate", "TX Rate", "RX Sum", "TX Sum" ])
 			for nic in self.nics:
+				nic_rx_r_txt = ""
+				nic_tx_r_txt = ""
 				nic_ip = self.ipaddr[nic]
 				nic_rx_r = self.rx_bytes[nic] * 8
-				if nic_rx_r > (1024*1024):
+				if nic_rx_r > (1024*1024) and nic_rx_r_txt == "":
 					nic_rx_r_txt = str(round(nic_rx_r/(1024*1024))) + " MBit"
-				if nic_rx_r > (1024):
+				if nic_rx_r > (1024) and nic_rx_r_txt == "":
 					nic_rx_r_txt = str(round(nic_rx_r/(1024))) + " KBit"
-				if nic_rx_r <= (1024):
+				if nic_rx_r <= (1024) and nic_rx_r_txt == "":
 					nic_rx_r_txt = str(round(nic_rx_r)) + " Bit"
 				nic_tx_r = self.tx_bytes[nic] * 8
-				if nic_tx_r > (1024*1024):
+				if nic_tx_r > (1024*1024) and nic_tx_r_txt == "":
 					nic_tx_r_txt = str(round(nic_tx_r/(1024*1024))) + " MBit"
-				if nic_tx_r > (1024):
+				if nic_tx_r > (1024) and nic_tx_r_txt == "":
 					nic_tx_r_txt = str(round(nic_tx_r/(1024))) + " KBit"
-				if nic_tx_r <= (1024):
+				if nic_tx_r <= (1024) and nic_tx_r_txt == "":
 					nic_tx_r_txt = str(round(nic_tx_r)) + " Bit"
 				nic_rx_s = str(self.rx_sum[nic])
 				nic_tx_s = str(self.tx_sum[nic])

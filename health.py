@@ -49,12 +49,12 @@ class check_health_ipmi(check):
 		found = False
 		for e in func.ipmiInfo():
 			found = True
+			state = "WARN"
 			sensor = e[0].strip()
 			value  = e[1].strip()
 			vtype  = e[2].strip()
 			sstate = e[3].strip()
 			if value != "na" and value != "0x0" and value != "0.000":
-				state = "WARN"
 				if sstate == "ok":	state = "PASS"
 				if sstate == "na":	state = "INFO"
 			self.add_result(self.title + " - " + sensor, state, value + " " + vtype)

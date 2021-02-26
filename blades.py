@@ -515,7 +515,7 @@ class check_blades_vpn_ipafile(check):
 	isManagement = False
 	isBlade      = "vpn"
 	minVersion   = 8020
-	command      = "vpn ipafile_check /opt/CPsuite-R80.40/fw1/conf/ipassignment.conf"
+	command      = "vpn ipafile_check $FWDIR/conf/ipassignment.conf"
 	isCommand    = True
 
 	def run_check(self):
