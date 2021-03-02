@@ -284,6 +284,34 @@ class check_gaia_z_check_connectivity(check):
 		self.runOnStartup = True
 
 
+class check_gaia_interface_buffers(check):
+	page         = "GAiA.Networking"
+	category     = "Ring Buffer"
+	title        = "Buffer Size"
+	isFirewall   = True
+	isManagement = True
+	isClusterXL  = False
+	minVersion   = 8020
+	command      = "ifconfig | grep HWaddr"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			b_rx = ""
+			b_tx = ""
+			state = "PASS"
+			nic = line.split()[0].strip()
+			b_out, b_err = func.execute_command('ethtool -g ' + nic)
+			for data in b_out:
+				if "RX:" in data:	b_rx = data.split()[1].strip()
+				if "TX:" in data:	b_tx = data.split()[1].strip()
+			if b_rx != "256":	state = "WARN"
+			if b_tx != "1024":	state = "WARN"
+			detail = "RX: " + b_rx + ", TX: " + b_tx
+			if not "." in nic:
+				self.add_result(self.title + " [" + nic + "]", state, detail)
+
+
 class check_gaia_interface_stats(check):
 	page         = "GAiA.Networking"
 	category     = "Statistics"

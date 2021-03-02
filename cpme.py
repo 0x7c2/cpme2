@@ -9,6 +9,8 @@
 
 import menu
 import content
+import sys
+import func
 
 #
 # set debug level,
@@ -21,5 +23,22 @@ debug = 0
 mycontent = content.content(debugLevel = debug)
 mymenu = menu.mymenu(mycontent, debugLevel = debug)
 
-while True:
-	mymenu.show_menu()
+def loopme():
+	while True:
+		mymenu.show_menu()
+
+
+if len(sys.argv) < 2:
+	func.info()
+	loopme()
+else:
+	if sys.argv[1] == "--version":
+		func.info()
+		func.info_version()
+	elif sys.argv[1] == "--update":
+		func.info()
+		func.self_update()
+	else:
+		func.info()
+		func.usage()
+

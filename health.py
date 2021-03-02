@@ -8,6 +8,64 @@
 
 from templates import check
 import func
+import datetime
+
+
+class check_health_mgmt_ica_certs_sic(check):
+	page         = "Health.Management"
+	category     = "Internal CA / SIC"
+	title        = "Certificate"
+	isFirewall   = False
+	isManagement = True
+	minVersion   = 8020
+	kind         = "SIC"
+	command      = "cpca_client lscert -kind " + kind
+	isCommand    = True
+
+	def run_check(self):
+		certs = {}
+		for line in self.commandOut:
+			tmp = line.replace(" = ", "=")
+			if "Subject" in tmp:
+				tmp_subject = tmp.strip('\n').replace('Subject=','')
+			if "Kind" in tmp:
+				tmp_line = tmp.strip('\n').split()
+				tmp_status = tmp_line[0].replace('Status=','')
+				tmp_kind   = tmp_line[1].replace('Kind=','')
+				tmp_serial = tmp_line[2].replace('Serial=','')
+				if "Revoked" in tmp:
+					process = False
+				else:
+					process = True
+				if tmp_subject in certs:
+					if "Valid" in tmp_status:
+						process = True
+					else:
+						process = False
+			if "Not_Before" in tmp:
+				tmp_dates = tmp.strip('\n').split('_')
+				tmp_from = tmp_dates[1].replace('Before: ','').replace('Not','').strip(' ')
+				tmp_to   = tmp_dates[2].replace('After: ','').strip(' ')
+				if process:
+					certs[tmp_subject] = { "status": tmp_status, "kind": tmp_kind, "serial": tmp_serial, "valid_from": tmp_from, "valid_to": tmp_to }
+		date_w = datetime.datetime.now()
+		date_w = date_w + datetime.timedelta(weeks=+12)
+		date_f = datetime.datetime.now()
+		date_f = date_f + datetime.timedelta(weeks=+4)
+		for c in certs:
+			detail = certs[c]['valid_to']
+			date_a = datetime.datetime.strptime(certs[c]['valid_to'], '%a %b %d %H:%M:%S %Y')
+			state = "PASS"
+			if date_w > date_a:
+				state = "WARN"
+			if date_f > date_a:
+				state = "FAIL"
+			self.add_result(self.kind + ": " + self.title + " [" + c[:45] + "]", state, detail)
+
+class check_health_mgmt_ica_certs_ike(check_health_mgmt_ica_certs_sic):
+	kind         = "IKE"
+	category     = "Internal CA / IKE"
+	
 
 
 class check_health_sensors(check):
@@ -21,6 +79,7 @@ class check_health_sensors(check):
 	isCommand    = True
 
 	def run_check(self):
+		found = False
 		for line in self.commandOut:
 			if "|" in line and not "Name" in line and not "-------" in line:
 				data = line.split("|")
@@ -31,7 +90,10 @@ class check_health_sensors(check):
 				s_type = data[4].strip()
 				s_stat = data[5].strip()
 				if s_stat != "0":	state = "FAIL"
+				found = True
 				self.add_result(s_type + " -> " + s_name, state, s_val + " " + s_unit)
+		if not found:
+			self.add_result(self.title + " -> Could not found any sensor!", "INFO", "")
 			
 
 

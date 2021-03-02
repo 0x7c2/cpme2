@@ -12,7 +12,7 @@ import threading
 import func
 
 class content:
-	dynamic_load = ['files', 'gaia', 'health', 'blades', 'performance', 'troubleshooting', 'kernel']
+	dynamic_load = ['files', 'gaia', 'health', 'blades', 'performance', 'troubleshooting', 'kernel', 'management', 'logfiles']
 	special_pages = [ 'CPme.Log' ]
 
 	debugLevel = 0

@@ -10,6 +10,59 @@ from templates import check
 import func
 
 
+class check_blades_synatk_config(check):
+	page         = "Software Blades.SYN Defender"
+	category     = "Configuration"
+	title        = "Synatk"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fwaccel synatk config"
+	isCommand    = True
+
+	def run_check(self):
+		for line in self.commandOut:
+			data = line.split()
+			if len(data) > 2:
+				field = data[0] + " " + data[1]
+				val   = data[2]
+			else:
+				field = data[0]
+				val   = data[1]
+			self.add_result(self.title + " -> " + field, "INFO", val)
+
+
+class check_blades_synatk_monitor(check):
+	page         = "Software Blades.SYN Defender"
+	category     = "Monitor"
+	title        = "Synatk"
+	isFirewall   = True
+	isManagement = False
+	minVersion   = 8020
+	command      = "fwaccel synatk monitor"
+	isCommand    = True
+
+	def run_check(self):
+		table = False
+		for line in self.commandOut:
+			if table and not "------------" in line:
+				data = line.split('|')
+				s_if = data[1].strip()
+				s_topology = data[2].strip()
+				s_enforce = data[3].strip()
+				s_state = data[4].strip()
+				s_peak = data[5].strip()
+				s_current = data[6].strip()
+				state = "INFO"
+				detail = ""
+				if not "Disable" in s_enforce:	state = "WARN"
+				if not "N/A" in s_peak:		detail = "Peak: " + s_peak + ", Current: " + s_current
+				self.add_result(self.title + " ["+s_if+", "+s_topology+", Enforce: "+s_enforce+"]", state, detail)
+			if "Peak" in line and "Current" in line:
+				table = True
+
+
+
 class check_blades_vpn_polsrv(check):
 	page         = "Software Blades.VPN"
 	category     = "Policy Server"
@@ -407,7 +460,7 @@ class check_blades_ext_ioc_feeds(check):
 		f_action = ""
 		for line in self.commandOut:
 			if "Feed Name:" in line:
-				f_name = line.replace('Feed Name: ','').strip(' ')[6:-4]
+				f_name = line.replace('Feed Name: ','').strip(' ')[5:-4]
 			if "Feed is" in line:
 				if "Active" in line:		f_status = "Active"
 				if "not Active" in line:	f_status = "NOT Active"

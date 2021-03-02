@@ -14,6 +14,10 @@ Run command from expert mode (bash):
 <img src="https://brecht.systems/cpme/cpme2.png">
 
 
+## History
+v2.0 - Initial CPme2 Version  
+
+
 ## Credits
 - SVA System Vertrieb Alexander GmbH, https://www.sva.de/
 

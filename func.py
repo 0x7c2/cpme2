@@ -13,6 +13,11 @@ import sqlite3
 import time
 import ipaddress
 
+#
+# variables
+#
+version = "2.0"
+
 def get_path(env):
         try:
                 return os.environ[env]
@@ -29,6 +34,50 @@ def get_path(env):
 cpregistry_file = get_path("CPDIR") + "/registry/HKLM_registry.data"
 cpregistry = {}
 
+
+def info():
+	global version
+	print("CPme2 - CheckPoint Report/Analytic Tool, " + version + " (by S.Brecht, <https://github.com/0x7c2/cpme2>)")
+	print("Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0>")
+	print("")
+
+
+def usage():
+	print("")
+	print("usage: cpme              Run interactive mode")
+	print("   or: cpme [arguments]  With arguments, run non interactive mode")
+	print("")
+	print("Arguments:")
+	print("  --update               Try to initiate self-update for CPme")
+	print("  --version              Print version and other information")
+	print("")
+
+
+def info_version():
+	readme = open('README.md', 'r')
+	lines = readme.readlines()
+	output = False
+	for lineraw in lines:
+		line = lineraw.strip('\n').replace('`','')
+		if line == "## History":
+			output = True
+		if line == "## Donation":
+			output = False
+		if output:
+			if "##" in line:
+				tmp = line.replace('## ', '')
+				print("+" + (len(tmp)+2)*"-" + "+")
+				print("| " + tmp + " |")
+				print("+" + (len(tmp)+2)*"-" + "+")
+			else:
+				print(line)
+
+
+def log_database(sql):
+        db = sqlite3.connect("./logfiles.sql")
+        dbcur = db.cursor()
+        dbcur.execute(sql)
+        return dbcur
 
 def gaia_get_value(str, getSingleValue = True):
 	retVal = False
@@ -96,7 +145,7 @@ def execute_sqlite_query(sql):
 			run = False
 			break
 		except:
-			time.sleep(0.2)
+			time.sleep(0.1)
 	return dbcur
 
 
@@ -153,7 +202,7 @@ def confirm(cmd):
 
 
 def self_update():
-	cmd = "curl_cli https://raw.githubusercontent.com/0x7c2/cpme/main/cpme-install.sh -k | bash"
+	cmd = "curl_cli https://raw.githubusercontent.com/0x7c2/cpme2/main/cpme-install.sh -k | bash"
 	print("> Trying self-update routine...")
 	print("> Executing command: " + cmd)
 	print("")
