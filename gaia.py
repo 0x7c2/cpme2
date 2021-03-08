@@ -284,6 +284,37 @@ class check_gaia_z_check_connectivity(check):
 		self.runOnStartup = True
 
 
+class check_gaia_interface_bonds(check):
+	page         = "GAiA.Networking"
+	category     = "Bonding"
+	title        = "Bond"
+	isFirewall   = True
+	isManagement = True
+	minVersion   = 8020
+	command      = "ifconfig | grep -c bond"
+	isCommand    = True
+
+	def run_check(self):
+		if int(self.commandOut[0]) > 0:
+			cmd = "cphaprob show_bond"
+			b_out, b_err = func.execute_command(cmd)
+			for data in b_out:
+				if "|" in data and "bond" in data:
+					cols = data.split("|")
+					b_name = cols[0].strip()
+					b_mode = cols[1].strip()
+					b_stat = cols[2].strip()
+					b_cfg  = cols[3].strip()
+					b_up   = cols[4].strip()
+					b_req  = cols[5].strip()
+					state = "PASS"
+					if b_stat != "UP":
+						state = "WARN"
+					self.add_result(self.title + " [" + b_name + ", " + b_mode + "]", state, b_up + "/" + b_cfg + " , Required: " + b_req)
+		else:
+			self.add_result("No bonding found", "PASS", "")
+
+
 class check_gaia_interface_buffers(check):
 	page         = "GAiA.Networking"
 	category     = "Ring Buffer"
