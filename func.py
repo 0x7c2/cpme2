@@ -280,6 +280,6 @@ def enabledBlades():
 
 if fwVersion() >= 8020 and fwVersion() <= 8030:
 	cpview_database = "/var/log/CPView_history/CPViewDB.dat"
-if fwVersion() == 8040:
+if fwVersion() >= 8040:
 	cpview_database = "/var/log/opt/CPshrd-R" + str(fwVersion())[:2] + "." + str(fwVersion())[2:] + "/cpview_services/cpview_services.dat"
 
