@@ -12,6 +12,16 @@
 
 found=0
 
+if [ "`fw ver | grep -c "R81.10"`" == "1" ]; then
+        echo "Running R81.10, continue installing..."
+        found=1
+fi
+
+if [ "`fw ver | grep -c "R81.00"`" == "1" ]; then
+        echo "Running R81.00, continue installing..."
+        found=1
+fi
+
 if [ "`fw ver | grep -c "R80.40"`" == "1" ]; then
         echo "Running R80.40, continue installing..."
         found=1
